@@ -8,30 +8,37 @@ import lombok.Data;
 import org.springframework.core.io.Resource;
 
 import javax.annotation.Nonnull;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import javax.sql.DataSource;
+import java.io.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import static com.google.common.base.Charsets.UTF_8;
+import static com.google.common.io.ByteStreams.copy;
 
 public class Deck {
 
     private final JsonFactory jf;
+    private final DataSource dataSource;
+
     private final List<NamedResource> resources = new ArrayList<>();
 
-    public Deck(JsonFactory jf) {
+    public Deck(JsonFactory jf, DataSource dataSource) {
         this.jf = jf;
+        this.dataSource = dataSource;
     }
 
     public void addMedia(@Nonnull String name, Resource resource) {
         resources.add(new NamedResource(name, resource));
     }
 
-    public void dump(OutputStream out) throws IOException {
+    public void dump(OutputStream out) throws IOException, SQLException {
         ZipOutputStream zip = new ZipOutputStream(out, UTF_8);
         dumpDatabase(zip);
         dumpResources(zip);
@@ -39,23 +46,32 @@ public class Deck {
         zip.finish();
     }
 
-    private void dumpDatabase(ZipOutputStream zip) throws IOException {
-        zip.putNextEntry(new ZipEntry("collection.anki2"));
-        // TODO dump database
-        zip.closeEntry();
+    private void dumpDatabase(ZipOutputStream zip) throws IOException, SQLException {
+        File temp = File.createTempFile("janki", "sqlite");
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement("backup to ?")) {
+            statement.setString(1, temp.getCanonicalPath());
+            statement.executeUpdate();
+            zip.putNextEntry(new ZipEntry("collection.anki2"));
+            try (InputStream in = new BufferedInputStream(new FileInputStream(temp))) {
+                copy(in, zip);
+            }
+            zip.closeEntry();
+        } finally {
+            temp.delete();
+        }
+
     }
 
     private void dumpMedia(ZipOutputStream zip) throws IOException {
         zip.putNextEntry(new ZipEntry("media"));
         try (JsonGenerator generator = jf.createGenerator(zip)) {
+            generator.writeStartObject();
             int i = 0;
-            // TODO format does not match what is expected
             for (NamedResource namedResource : resources) {
-                generator.writeStartObject();
-                generator.writeNumberField("number", i++);
-                generator.writeObjectField("name", namedResource.getName());
-                generator.writeEndObject();
+                generator.writeStringField(Integer.toString(i++), namedResource.getName());
             }
+            generator.writeEndObject();
         }
         zip.closeEntry();
     }
@@ -65,14 +81,14 @@ public class Deck {
         for (NamedResource namedResource : resources) {
             try (InputStream in = namedResource.getResource().getInputStream()) {
                 zip.putNextEntry(new ZipEntry(Integer.toString(i++)));
-                ByteStreams.copy(in, zip);
+                copy(in, zip);
                 zip.closeEntry();
             }
         }
     }
 
     @Data
-    private class NamedResource {
+    private static final class NamedResource {
         private final String name;
         private final Resource resource;
 
