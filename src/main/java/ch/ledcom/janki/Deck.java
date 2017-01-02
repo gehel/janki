@@ -3,6 +3,7 @@ package ch.ledcom.janki;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
 import com.google.common.io.ByteStreams;
 import lombok.Data;
 import org.springframework.core.io.Resource;
@@ -49,9 +50,10 @@ public class Deck {
     private void dumpDatabase(ZipOutputStream zip) throws IOException, SQLException {
         File temp = File.createTempFile("janki", "sqlite");
         try (Connection connection = dataSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement("backup to ?")) {
-            statement.setString(1, temp.getCanonicalPath());
-            statement.executeUpdate();
+             Statement statement = connection.createStatement()) {
+//            statement.setString(1, temp.getCanonicalPath());
+//            statement.executeUpdate();
+            statement.executeUpdate("backup to '" + temp.getAbsolutePath() + "'");
             zip.putNextEntry(new ZipEntry("collection.anki2"));
             try (InputStream in = new BufferedInputStream(new FileInputStream(temp))) {
                 copy(in, zip);
@@ -72,6 +74,7 @@ public class Deck {
                 generator.writeStringField(Integer.toString(i++), namedResource.getName());
             }
             generator.writeEndObject();
+            generator.close();
         }
         zip.closeEntry();
     }
