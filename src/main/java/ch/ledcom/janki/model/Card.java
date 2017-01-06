@@ -15,7 +15,7 @@ import javax.persistence.*;
         }
 )
 public class Card {
-    @Id @Column(nullable = false) private Integer id;
+    @Id @GeneratedValue(strategy = GenerationType.AUTO) @Column(nullable = false) private Integer id;
     @ManyToOne(optional = false) @JoinColumn(name = "nid") private Note note;
     @Column(nullable = false) private Integer did;
     @Column(nullable = false) private Integer ord;

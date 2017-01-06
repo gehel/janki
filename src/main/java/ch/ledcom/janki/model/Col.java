@@ -1,14 +1,14 @@
 package ch.ledcom.janki.model;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import lombok.Data;
 
+import javax.persistence.*;
+
+@Data
 @Entity
 @Table(name = "col")
 public class Col {
-    @Id @Column(nullable = false) private Integer id;
+    @Id @GeneratedValue(strategy = GenerationType.AUTO) @Column(nullable = false) private Integer id;
     @Column(nullable = false) private Integer crt;
     @Column(nullable = false) private Integer mod;
     @Column(nullable = false) private Integer scm;

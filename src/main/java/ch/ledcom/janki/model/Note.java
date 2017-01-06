@@ -1,7 +1,10 @@
 package ch.ledcom.janki.model;
 
+import lombok.Data;
+
 import javax.persistence.*;
 
+@Data
 @Entity
 @Table(
         name = "notes",
@@ -12,7 +15,7 @@ import javax.persistence.*;
 
 )
 public class Note {
-    @Id @Column(nullable = false) private Integer id;
+    @Id @GeneratedValue(strategy = GenerationType.AUTO) @Column(nullable = false) private Integer id;
     @Column(nullable = false) private String guid;
     @Column(nullable = false) private Integer mid;
     @Column(nullable = false) private Integer mod;

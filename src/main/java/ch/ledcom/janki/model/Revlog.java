@@ -1,7 +1,10 @@
 package ch.ledcom.janki.model;
 
+import lombok.Data;
+
 import javax.persistence.*;
 
+@Data
 @Entity
 @Table(
         name = "revlog",
