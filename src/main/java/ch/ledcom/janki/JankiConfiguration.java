@@ -1,10 +1,12 @@
-package ch.ledcom.janki.model;
+package ch.ledcom.janki;
 
-import ch.ledcom.janki.Deck;
+import ch.ledcom.janki.model.Card;
 import com.google.common.collect.ImmutableMap;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.Resource;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
@@ -18,16 +20,20 @@ import javax.sql.DataSource;
 import static org.sqlite.SQLiteConfig.Encoding.UTF8;
 
 @Configuration
-@ComponentScan(basePackageClasses = Deck.class)
-@EnableJpaRepositories(basePackageClasses = Deck.class)
+@ComponentScan(basePackageClasses = Anki.class)
+@EnableJpaRepositories(basePackageClasses = Anki.class)
 public class JankiConfiguration {
+
+    @Value("classpath:ch/ledcom/janki/schema.ddl")
+    private Resource schemaScript;
+
     @Bean
     public DataSource dataSource() {
         SQLiteConfig config = new SQLiteConfig();
         config.setEncoding(UTF8);
         config.enforceForeignKeys(true);
         SQLiteDataSource dataSource = new SQLiteDataSource(config);
-        dataSource.setUrl("jdbc:sqlite::memory:");
+        dataSource.setUrl("jdbc:sqlite:test.db");
         return dataSource;
     }
 

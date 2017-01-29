@@ -4,7 +4,9 @@ package ch.ledcom.janki;
 import ch.ledcom.janki.model.Card;
 import ch.ledcom.janki.model.Col;
 import ch.ledcom.janki.model.Note;
-import ch.ledcom.janki.model.json.Conf;
+import ch.ledcom.janki.model.json.Dconf;
+import ch.ledcom.janki.model.json.Deck;
+import ch.ledcom.janki.model.json.Model;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -14,20 +16,30 @@ import org.springframework.core.io.Resource;
 
 import javax.annotation.Nonnull;
 import javax.sql.DataSource;
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import static ch.ledcom.janki.model.json.Conf.defaultConf;
+import static ch.ledcom.janki.model.json.Deck.defaultDeck;
+import static ch.ledcom.janki.model.json.Model.defaultModel;
 import static ch.ledcom.janki.utils.DateUtils.nowAsInt;
 import static com.google.common.base.Charsets.UTF_8;
 import static com.google.common.io.ByteStreams.copy;
 
-public class Deck {
+public class Anki {
 
     private final JsonFactory jf;
     private final ObjectMapper objectMapper;
@@ -39,7 +51,7 @@ public class Deck {
 
     private final List<NamedResource> resources = new ArrayList<>();
 
-    public Deck(JsonFactory jf, ObjectMapper objectMapper, DataSource dataSource, CardRepository cardRepository, ColRepository colRepository,
+    public Anki(JsonFactory jf, ObjectMapper objectMapper, DataSource dataSource, CardRepository cardRepository, ColRepository colRepository,
                 NoteRepository noteRepository) throws JsonProcessingException {
         this.jf = jf;
         this.objectMapper = objectMapper;
@@ -53,27 +65,32 @@ public class Deck {
 
     public Col initDeck() throws JsonProcessingException {
         Col col = new Col();
-        col.setMod(nowAsInt());
         col.setCrt(nowAsInt());
+        col.setMod(nowAsInt());
         col.setScm(nowAsInt());
         col.setVer(11);
         col.setDty(0);
         col.setUsn(0);
         col.setLs(0);
-        col.setConf(objectMapper.writeValueAsString(new Conf()));
+        col.setConf(objectMapper.writeValueAsString(defaultConf()));
+        Map<String, Model> models = new HashMap<>();
+        models.put("1432", defaultModel());
+        col.setModels(objectMapper.writeValueAsString(models));
+        Map<String, Deck> decks = new HashMap<>();
+        decks.put("12345", defaultDeck());
+        col.setDecks(objectMapper.writeValueAsString(decks));
+        Map<String, Dconf> dconfs = new HashMap<>();
+        dconfs.put("1", Dconf.defaultDconf());
+        col.setDconf(objectMapper.writeValueAsString(dconfs));
+        col.setTags("{}");
         return colRepository.save(col);
     }
 
-    public void addCard() {
-        Note note = new Note();
-        note.setMod(nowAsInt());
-        Card card = new Card();
-        card.setMod(nowAsInt());
+    public void addCard(Integer modelId, Integer deckId) {
+        Note note = Note.createNote(modelId, "Bonjour" + Note.SEP + "Hello", "Bonjour");
+        Card card = Card.createCard(note, deckId);
 
-        note = noteRepository.save(note);
-
-        card.setNote(note);
-
+        noteRepository.save(note);
         cardRepository.save(card);
     }
 
@@ -90,11 +107,11 @@ public class Deck {
     }
 
     private void dumpDatabase(ZipOutputStream zip) throws IOException, SQLException {
-        File temp = File.createTempFile("janki", "sqlite");
-        try (Connection connection = dataSource.getConnection();
-             Statement statement = connection.createStatement()) {
-//            statement.setString(1, temp.getCanonicalPath());
-//            statement.executeUpdate();
+        File temp = File.createTempFile("janki-", ".sqlite");
+        try (
+                Connection connection = dataSource.getConnection();
+                Statement statement = connection.createStatement()
+        ) {
             statement.executeUpdate("backup to '" + temp.getAbsolutePath() + "'");
             zip.putNextEntry(new ZipEntry("collection.anki2"));
             try (InputStream in = new BufferedInputStream(new FileInputStream(temp))) {
@@ -142,4 +159,5 @@ public class Deck {
             this.resource = resource;
         }
     }
+
 }

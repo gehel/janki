@@ -1,0 +1,56 @@
+{
+  "1484256016375": {
+    "vers": [],
+    "name": "Basic",
+    "tags": [],
+    "did": 1484256037993,
+    "usn": -1,
+    "req": [
+      [
+        0,
+        "all",
+        [
+          0
+        ]
+      ]
+    ],
+    "flds": [
+      {
+        "size": 20,
+        "name": "Front",
+        "media": [],
+        "rtl": false,
+        "ord": 0,
+        "font": "Arial",
+        "sticky": false
+      },
+      {
+        "size": 20,
+        "name": "Back",
+        "media": [],
+        "rtl": false,
+        "ord": 1,
+        "font": "Arial",
+        "sticky": false
+      }
+    ],
+    "sortf": 0,
+    "latexPre": "\\documentclass[12pt]{article}\n\\special{papersize=3in,5in}\n\\usepackage[utf8]{inputenc}\n\\usepackage{amssymb,amsmath}\n\\pagestyle{empty}\n\\setlength{\\parindent}{0in}\n\\begin{document}\n",
+    "tmpls": [
+      {
+        "afmt": "{{FrontSide}}\n\n<hr id=answer>\n\n{{Back}}",
+        "name": "Card 1",
+        "qfmt": "{{Front}}",
+        "did": null,
+        "ord": 0,
+        "bafmt": "",
+        "bqfmt": ""
+      }
+    ],
+    "latexPost": "\\end{document}",
+    "type": 0,
+    "id": "1484256016375",
+    "css": ".card {\n font-family: arial;\n font-size: 20px;\n text-align: center;\n color: black;\n background-color: white;\n}\n",
+    "mod": 1484256122
+  }
+}

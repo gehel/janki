@@ -1,16 +1,17 @@
 package ch.ledcom.janki.model.json;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.util.List;
 
-@Data
+@Data @AllArgsConstructor
 public class Field {
     private String name;
-    private boolean rtl = false;
-    private boolean sticky = false;
+    private boolean rtl;
+    private boolean sticky;
     private List<String> media;
-    private Integer ord = 0;
-    private String font = "Arial";
-    private Integer size = 12;
+    private Integer ord;
+    private String font;
+    private Integer size;
 }
